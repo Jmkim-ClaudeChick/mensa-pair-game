@@ -278,6 +278,66 @@ body {
   font-weight: 600;
 }
 
+/* 2인 대결 누적 승/무/패 전적 패널 */
+.match-record-panel {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.5rem;
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.match-record-panel__label {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.match-record-panel__value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* 전적 초기화 / 재시작 버튼 공통 스타일 - 어린이도 실수 없이 누를 수 있도록 최소 타점 44x44px 확보 */
+.match-record-panel__reset-btn,
+.restart-btn {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  border: 2px solid var(--color-accent);
+  background: var(--color-surface);
+  color: var(--color-accent-strong);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.match-record-panel__reset-btn:hover,
+.restart-btn:hover {
+  transform: translateY(-2px);
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+.match-record-panel__reset-btn:focus-visible,
+.restart-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.restart-btn {
+  margin-top: 0.5rem;
+}
+
 /* 카드 보드 */
 .board-section {
   display: flex;

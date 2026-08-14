@@ -15,15 +15,19 @@ let _highScorePanelEl = null;
 /** @type {HTMLElement|null} */
 let _playerTurnPanelEl = null;
 
+/** @type {HTMLElement|null} */
+let _matchRecordPanelEl = null;
+
 /**
- * 완료 배너/최고기록 패널/턴·점수 패널 DOM 참조를 등록한다. main.js 부트스트랩 시 1회 호출.
- * @param {{completionBannerEl: HTMLElement, highScorePanelEl: HTMLElement, playerTurnPanelEl?: HTMLElement}} elements
+ * 완료 배너/최고기록 패널/턴·점수 패널/전적 패널 DOM 참조를 등록한다. main.js 부트스트랩 시 1회 호출.
+ * @param {{completionBannerEl: HTMLElement, highScorePanelEl: HTMLElement, playerTurnPanelEl?: HTMLElement, matchRecordPanelEl?: HTMLElement}} elements
  * @returns {void}
  */
 export function initScoreboard(elements) {
   _completionBannerEl = elements.completionBannerEl;
   _highScorePanelEl = elements.highScorePanelEl;
   _playerTurnPanelEl = elements.playerTurnPanelEl || null;
+  _matchRecordPanelEl = elements.matchRecordPanelEl || null;
 }
 
 /**
@@ -50,6 +54,7 @@ export function renderCompletionBanner({ attempts, elapsedTime, isRecord }) {
     <p class="completion-banner__title">게임 완료!</p>
     <p class="completion-banner__stats">시도 횟수: ${attempts}회 · 소요 시간: ${formatTime(elapsedTime)}</p>
     ${isRecord ? '<p class="completion-banner__record">신기록!</p>' : ''}
+    <button type="button" class="restart-btn" data-action="restart">다시하기</button>
   `;
 }
 
@@ -126,7 +131,35 @@ export function renderTwoPlayerResultBanner(container, { scores, winner }) {
     <p class="completion-banner__title">대결 종료!</p>
     <p class="completion-banner__stats">Player 1: ${scores[1]}개 · Player 2: ${scores[2]}개</p>
     <p class="completion-banner__winner">${winnerText}</p>
+    <button type="button" class="restart-btn" data-action="restart">다시하기</button>
   `;
+}
+
+/**
+ * (v2) 2인 모드 누적 승/무/패 전적 패널 렌더링 + 전적 초기화 버튼 포함
+ * @param {HTMLElement} [container]
+ * @returns {void}
+ */
+export function renderMatchRecordPanel(container) {
+  const target = container || _matchRecordPanelEl;
+  if (!target) return;
+
+  const record = storage.loadMatchRecord();
+
+  target.innerHTML = `
+    <p class="match-record-panel__label">2인 대결 전적</p>
+    <p class="match-record-panel__value">Player 1 승 ${record.player1Wins} · 무승부 ${record.draws} · Player 2 승 ${record.player2Wins}</p>
+    <button type="button" class="match-record-panel__reset-btn" data-action="reset-match-record">기록 초기화</button>
+  `;
+}
+
+/**
+ * 누적 승/무/패 전적을 0/0/0으로 초기화하고 패널을 다시 렌더링
+ * @returns {void}
+ */
+export function resetMatchRecord() {
+  storage.resetMatchRecord();
+  renderMatchRecordPanel(_matchRecordPanelEl);
 }
 
 /**
@@ -137,7 +170,9 @@ export function renderTwoPlayerResultBanner(container, { scores, winner }) {
  */
 export function handleGameCompleted(state) {
   if (state.mode === 'twoPlayer') {
+    storage.recordMatchResult(state.winner); // 승/무/패 누적 전적 반영
     renderTwoPlayerResultBanner(_completionBannerEl, { scores: state.scores, winner: state.winner });
+    renderMatchRecordPanel(_matchRecordPanelEl);
     return; // 2인 모드 결과는 최고 기록에 저장하지 않는다 (PRD 제약)
   }
 

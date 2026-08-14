@@ -3,7 +3,7 @@
  * localStorage 읽기/쓰기 (난이도별 최고 기록)
  */
 
-import { STORAGE_KEY, DIFFICULTY_CONFIG, THEME_CONFIG, DEFAULT_THEME } from './config.js';
+import { STORAGE_KEY, DIFFICULTY_CONFIG, THEME_CONFIG, DEFAULT_THEME, MATCH_RECORD_STORAGE_KEY } from './config.js';
 
 /** (v2) localStorage에 마지막 선택 테마를 저장할 때 사용하는 키 */
 const THEME_STORAGE_KEY = 'mensaPairGame.theme.v1';
@@ -118,4 +118,75 @@ export function saveTheme(themeId) {
   } catch (error) {
     return false;
   }
+}
+
+/**
+ * @typedef {Object} MatchRecord
+ * @property {number} player1Wins
+ * @property {number} draws
+ * @property {number} player2Wins
+ */
+
+/**
+ * @returns {MatchRecord}
+ */
+function _createEmptyMatchRecord() {
+  return { player1Wins: 0, draws: 0, player2Wins: 0 };
+}
+
+/**
+ * localStorage에서 2인 모드 누적 승/무/패 전적을 읽음. 값이 없거나 파싱 실패 시 0/0/0 반환
+ * @returns {MatchRecord}
+ */
+export function loadMatchRecord() {
+  const empty = _createEmptyMatchRecord();
+
+  try {
+    const raw = window.localStorage.getItem(MATCH_RECORD_STORAGE_KEY);
+    if (!raw) return empty;
+
+    const parsed = JSON.parse(raw);
+    return { ...empty, ...parsed };
+  } catch (error) {
+    return empty;
+  }
+}
+
+/**
+ * 2인 모드 누적 승/무/패 전적을 localStorage에 저장
+ * @param {MatchRecord} record
+ * @returns {boolean} 저장 성공 여부
+ */
+export function saveMatchRecord(record) {
+  try {
+    window.localStorage.setItem(MATCH_RECORD_STORAGE_KEY, JSON.stringify(record));
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * 게임 완료 시 확정된 winner 값을 누적 전적에 1건 반영 후 저장
+ * @param {1|2|null} winner - 1이면 Player 1 승, 2면 Player 2 승, null이면 무승부
+ * @returns {MatchRecord}
+ */
+export function recordMatchResult(winner) {
+  const record = loadMatchRecord();
+  if (winner === 1) record.player1Wins += 1;
+  else if (winner === 2) record.player2Wins += 1;
+  else record.draws += 1;
+
+  saveMatchRecord(record);
+  return record;
+}
+
+/**
+ * 누적 승/무/패 전적을 0/0/0으로 초기화
+ * @returns {MatchRecord}
+ */
+export function resetMatchRecord() {
+  const empty = _createEmptyMatchRecord();
+  saveMatchRecord(empty);
+  return empty;
 }

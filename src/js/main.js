@@ -14,6 +14,8 @@ import {
   handleGameCompleted,
   renderHighScorePanel,
   renderPlayerTurnPanel,
+  renderMatchRecordPanel,
+  resetMatchRecord,
   clearCompletionBanner,
 } from './scoreboard.js';
 import { loadSavedTheme, saveTheme } from './storage.js';
@@ -26,8 +28,9 @@ function init() {
   const completionBannerEl = document.getElementById('completion-banner');
   const highScorePanelEl = document.getElementById('high-score-panel');
   const playerTurnPanelEl = document.getElementById('player-turn-panel');
+  const matchRecordPanelEl = document.getElementById('match-record-panel');
 
-  initScoreboard({ completionBannerEl, highScorePanelEl, playerTurnPanelEl });
+  initScoreboard({ completionBannerEl, highScorePanelEl, playerTurnPanelEl, matchRecordPanelEl });
 
   // 카드 클릭: 이벤트 위임으로 보드 컨테이너 하나에만 리스너 등록
   boardEl.addEventListener('click', (event) => {
@@ -36,6 +39,21 @@ function init() {
 
     const cardId = Number(cardButton.dataset.cardId);
     gameState.flipCard(cardId);
+  });
+
+  // 재시작 버튼: 완료 배너 안에서 동적으로 렌더링되므로 이벤트 위임으로 처리
+  completionBannerEl.addEventListener('click', (event) => {
+    const restartBtn = event.target.closest('[data-action="restart"]');
+    if (!restartBtn) return;
+    startGame(); // 옵션 없이 호출 → 현재 난이도/테마/모드 그대로 새 게임
+  });
+
+  // 전적 초기화 버튼: 전적 패널 안에서 동적으로 렌더링되므로 이벤트 위임으로 처리
+  matchRecordPanelEl.addEventListener('click', (event) => {
+    const resetBtn = event.target.closest('[data-action="reset-match-record"]');
+    if (!resetBtn) return;
+    if (!window.confirm('2인 대결 전적을 초기화할까요?')) return;
+    resetMatchRecord();
   });
 
   // 상태 변경 구독: cardFlipped / pairMatched / mismatchResolved / gameCompleted 시 DOM 갱신
@@ -83,6 +101,7 @@ function init() {
     renderModeSelector(modeSelectorEl, nextMode, (newMode) => startGame({ mode: newMode }));
     renderHighScorePanel(highScorePanelEl, nextDifficulty);
     renderPlayerTurnPanel(playerTurnPanelEl, state);
+    renderMatchRecordPanel(matchRecordPanelEl);
   }
 
   const initialTheme = loadSavedTheme();

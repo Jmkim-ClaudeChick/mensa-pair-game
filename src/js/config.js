@@ -40,6 +40,9 @@ export const SYMBOL_POOL = [
 /** localStorage에 난이도별 최고 기록을 저장할 때 사용하는 키 */
 export const STORAGE_KEY = 'mensaPairGame.highScores.v1';
 
+/** localStorage에 2인 모드 누적 승/무/패 전적을 저장할 때 사용하는 키 */
+export const MATCH_RECORD_STORAGE_KEY = 'mensaPairGame.matchRecord.v1';
+
 /** 짝이 맞지 않은 카드가 자동으로 다시 뒤집히기까지의 대기 시간(ms) */
 export const MISMATCH_DELAY_MS = 1000;
 
