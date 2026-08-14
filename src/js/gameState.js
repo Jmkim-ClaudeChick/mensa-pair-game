@@ -60,7 +60,16 @@ function _createInitialState() {
 
 function _notify(eventName) {
   const snapshot = getState();
-  _listeners.forEach((listener) => listener(eventName, snapshot));
+  _listeners.forEach((listener) => {
+    // 리스너(렌더링 콜백)에서 예외가 나더라도 다른 리스너 호출과, 무엇보다
+    // flipCard()가 이미 확정한 isLocked/flippedCardIds 등의 게임 상태 변경 흐름이
+    // 절대 끊기지 않도록 격리한다. 격리하지 않으면 카드가 영구히 선택 불가능해질 수 있다.
+    try {
+      listener(eventName, snapshot);
+    } catch (err) {
+      console.error(`[gameState] listener error on "${eventName}"`, err);
+    }
+  });
 }
 
 /**
@@ -104,6 +113,14 @@ export function flipCard(cardId) {
   const state = _state;
   const card = state.cards.find((c) => c.id === cardId);
 
+  // 방어적 자기 복구: isLocked=false인데 flippedCardIds가 2개 남아있는 것은
+  // 정상 흐름에서는 절대 나올 수 없는 조합이다(판정 로직이 알림 리스너 예외 등으로
+  // 중간에 끊긴 경우에만 발생). 다음 클릭에서 조용히 정리해 보드가 영구히
+  // 멈추지 않도록 한다.
+  if (!state.isLocked && state.flippedCardIds.length >= 2) {
+    state.flippedCardIds = [];
+  }
+
   if (!card) return { success: false, state: getState() };
   if (state.isLocked) return { success: false, state: getState() }; // 판정 대기 중 입력 무시
   if (card.isMatched || card.isFlipped) return { success: false, state: getState() }; // 확정/중복 클릭 무시
@@ -111,28 +128,38 @@ export function flipCard(cardId) {
 
   card.isFlipped = true;
   state.flippedCardIds.push(cardId);
-  _notify('cardFlipped');
 
-  if (state.flippedCardIds.length === 2) {
-    state.attempts += 1; // "시도(뒤집기) 횟수" = 카드 2장 비교 1회 단위로 카운트
-    state.isLocked = true;
-    const [firstId, secondId] = state.flippedCardIds;
-    const [first, second] = [firstId, secondId].map((id) => state.cards.find((c) => c.id === id));
+  if (state.flippedCardIds.length < 2) {
+    _notify('cardFlipped'); // 첫 장: 판정할 것이 없으므로 바로 알림
+    return { success: true, state: getState() };
+  }
 
-    if (first.pairId === second.pairId) {
-      first.isMatched = second.isMatched = true;
-      state.matchedPairsCount += 1;
-      state.flippedCardIds = [];
-      state.isLocked = false;
-      if (state.mode === 'twoPlayer') {
-        state.scores[state.currentPlayer] += 1; // (v2) 짝을 맞춘 플레이어가 그대로 한 번 더 진행
-      }
-      _notify('pairMatched');
-      if (state.matchedPairsCount === state.totalPairsCount) completeGame();
-    } else {
-      const gen = _generation;
-      setTimeout(() => resolveMismatch(firstId, secondId, gen), MISMATCH_DELAY_MS); // 1초 후 자동 원복
+  // 두 번째 장: 판정에 필요한 모든 상태 변경(isLocked/flippedCardIds/isMatched/scores/타이머 예약)을
+  // 먼저 전부 확정한 뒤에만 알림을 보낸다. 알림 리스너(렌더링 콜백)가 예외를 던지더라도
+  // 게임 상태 자체는 이미 일관된 값으로 확정되어 있으므로 보드가 멈추지 않는다.
+  state.attempts += 1; // "시도(뒤집기) 횟수" = 카드 2장 비교 1회 단위로 카운트
+  const [firstId, secondId] = state.flippedCardIds;
+  const [first, second] = [firstId, secondId].map((id) => state.cards.find((c) => c.id === id));
+  const isMatch = first.pairId === second.pairId;
+
+  if (isMatch) {
+    first.isMatched = second.isMatched = true;
+    state.matchedPairsCount += 1;
+    state.flippedCardIds = [];
+    state.isLocked = false;
+    if (state.mode === 'twoPlayer') {
+      state.scores[state.currentPlayer] += 1; // (v2) 짝을 맞춘 플레이어가 그대로 한 번 더 진행
     }
+    const justCompleted = state.matchedPairsCount === state.totalPairsCount;
+    if (justCompleted) _markCompleted(state);
+
+    _notify('pairMatched');
+    if (justCompleted) _notify('gameCompleted');
+  } else {
+    state.isLocked = true;
+    const gen = _generation;
+    setTimeout(() => resolveMismatch(firstId, secondId, gen), MISMATCH_DELAY_MS); // 1초 후 자동 원복
+    _notify('cardFlipped');
   }
 
   return { success: true, state: getState() };
@@ -165,11 +192,12 @@ export function resolveMismatch(firstId, secondId, gen = _generation) {
 }
 
 /**
- * 모든 짝이 맞춰졌을 때 상태를 completed로 전환하고 elapsedTime 확정
+ * status/elapsedTime/winner 등 "완료" 관련 필드만 확정한다 (알림은 호출부 책임).
+ * flipCard()의 매치 판정 직후와 completeGame() 양쪽에서 공유하는 내부 헬퍼.
+ * @param {GameState} state
  * @returns {void}
  */
-export function completeGame() {
-  const state = _state;
+function _markCompleted(state) {
   state.status = 'completed';
   state.elapsedTime = state.startTime ? Math.round((Date.now() - state.startTime) / 1000) : 0;
 
@@ -178,7 +206,14 @@ export function completeGame() {
     else if (state.scores[2] > state.scores[1]) state.winner = 2;
     else state.winner = null; // 무승부
   }
+}
 
+/**
+ * 모든 짝이 맞춰졌을 때 상태를 completed로 전환하고 elapsedTime 확정
+ * @returns {void}
+ */
+export function completeGame() {
+  _markCompleted(_state);
   _notify('gameCompleted');
 }
 
