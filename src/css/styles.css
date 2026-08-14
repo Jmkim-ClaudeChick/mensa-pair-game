@@ -441,6 +441,50 @@ body {
   opacity: 0.9;
 }
 
+/* 짝을 맞춰 확정된 카드는 더 이상 애니메이션이 필요 없으므로, 일부 모바일 브라우저/GPU에서
+   backface-visibility + 3D rotateY 조합이 불안정하게 렌더링되는 문제를 피하기 위해
+   회전 트릭 없이 앞면을 즉시(전환 애니메이션 없이) 고정 노출한다 (뒷면은 완전히 숨김).
+   transition을 꺼두지 않으면 부모(card-inner)만 150ms에 걸쳐 각도가 바뀌는 동안
+   자식(card-face--front)은 각도가 즉시 바뀌어 버려 두 값이 어긋나는 순간
+   backface-visibility 판정상 앞면이 잠깐 사라지는 깜빡임이 생길 수 있다. */
+.card.is-matched .card-inner {
+  -webkit-transform: none;
+  transform: none;
+  transition: none;
+}
+
+.card.is-matched .card-face--front {
+  -webkit-transform: none;
+  transform: none;
+}
+
+.card.is-matched .card-face--back {
+  display: none;
+}
+
+/* 3D 뒤집기 렌더링 여부와 무관하게, 맞춘 카드임을 누가 봐도 알 수 있도록
+   .card 자체(회전하지 않는 2D 레이어)에 체크 배지를 고정 표시한다 */
+.card.is-matched::after {
+  content: '✓';
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-card-matched);
+  color: #08301f;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* 반응형 레이아웃 */
 @media (max-width: 640px) {
   .card-grid {
