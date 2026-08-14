@@ -1,0 +1,389 @@
+/* styles.css
+   전역 스타일, 테마별 CSS 변수, 카드 그리드(반응형), 뒤집기 애니메이션, 포커스 스타일 */
+
+:root {
+  --color-bg: #fff3e0;
+  --color-surface: #ffffff;
+  --color-surface-alt: #ffe8cc;
+  --color-text: #3a2e26;
+  --color-text-muted: #7a6a5c;
+  --color-accent: #ff9f43;
+  --color-accent-strong: #ff7f11;
+  --color-card-back: #ffd9a0;
+  --color-card-front: #ffffff;
+  --color-card-front-text: #3a2e26;
+  --color-card-matched: #7bd88f;
+  --color-record: #ffb703;
+  --color-focus: #ff5964;
+  --radius-md: 22px;
+  --radius-sm: 14px;
+  --flip-duration: 150ms;
+  --tap-min: 44px;
+}
+
+/* (v2) 테마별 CSS 커스텀 프로퍼티 오버라이드. <body data-theme="..."> 로 적용 */
+[data-theme='animal'] {
+  --color-bg: #fff3e0;
+  --color-accent: #ff9f43;
+  --color-card-back: #ffd9a0;
+  --color-card-matched: #7bd88f;
+}
+
+[data-theme='space'] {
+  --color-bg: #10123b;
+  --color-accent: #8c7bff;
+  --color-card-back: #2a2a63;
+  --color-card-matched: #55e6c1;
+}
+
+[data-theme='ocean'] {
+  --color-bg: #e3f7fb;
+  --color-accent: #2ec4f1;
+  --color-card-back: #aee6f5;
+  --color-card-matched: #ffd166;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  transition: background-color 200ms ease;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 4vw, 2rem) 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.app-header {
+  text-align: center;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.app-title {
+  margin: 0 0 0.25rem;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  letter-spacing: 0.02em;
+}
+
+.app-subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: clamp(0.85rem, 2vw, 1rem);
+}
+
+/* 테마 / 모드 / 난이도 선택 공통 레이아웃 */
+.theme-selector,
+.mode-selector,
+.difficulty-selector {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* 선택 버튼 공통(테마/모드/난이도) - 어린이도 실수 없이 누를 수 있도록 최소 타점 44x44px 확보 */
+.difficulty-btn,
+.theme-btn,
+.mode-btn {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  border-radius: 999px;
+  border: 2px solid var(--color-surface-alt);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, color 150ms ease;
+}
+
+.difficulty-btn {
+  padding: 0.65rem 1.3rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mode-btn {
+  padding: 0.65rem 1.3rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.theme-btn__icon {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.difficulty-btn:hover,
+.theme-btn:hover,
+.mode-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-accent);
+}
+
+.difficulty-btn.is-selected,
+.theme-btn.is-selected,
+.mode-btn.is-selected {
+  background: var(--color-accent);
+  border-color: var(--color-accent-strong);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.difficulty-btn:focus-visible,
+.theme-btn:focus-visible,
+.mode-btn:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* (v2) 2인 모드 턴/점수 패널 */
+.player-turn-panel {
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1.5rem;
+  width: min(100%, 420px);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.player-turn-panel[hidden] {
+  display: none;
+}
+
+.player-turn-panel__turn {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.player-turn-panel__scores {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.player-turn-panel__score.is-active {
+  color: var(--color-accent-strong);
+  font-weight: 700;
+}
+
+/* 결과 / 최고 기록 영역 */
+.result-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  text-align: center;
+}
+
+.completion-banner {
+  background: var(--color-surface);
+  border: 1px solid var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.5rem;
+  width: min(100%, 420px);
+}
+
+.completion-banner[hidden] {
+  display: none;
+}
+
+.completion-banner__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.completion-banner__stats {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.completion-banner__record {
+  margin: 0.5rem 0 0;
+  color: var(--color-record);
+  font-weight: 700;
+}
+
+.completion-banner__winner {
+  margin: 0.5rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-accent-strong);
+}
+
+.high-score-panel {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.5rem;
+  width: min(100%, 420px);
+}
+
+.high-score-panel__label {
+  margin: 0 0 0.15rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.high-score-panel__value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* 카드 보드 */
+.board-section {
+  display: flex;
+  justify-content: center;
+}
+
+.card-grid {
+  --cols: 4;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: clamp(0.6rem, 2.4vw, 1.1rem);
+  width: 100%;
+  max-width: 720px;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  perspective: 800px;
+  border-radius: var(--radius-md);
+}
+
+.card.is-matched {
+  cursor: default;
+  pointer-events: none;
+}
+
+.card:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
+}
+
+.card-inner {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform var(--flip-duration) ease;
+  transform-style: preserve-3d;
+}
+
+.card.is-flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  backface-visibility: hidden;
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+}
+
+.card-face--back {
+  background: linear-gradient(135deg, var(--color-card-back), var(--color-surface-alt));
+  border: 2px solid var(--color-surface-alt);
+}
+
+/* (v2) 카드 뒷면에 "?" 대신 테마별 아이콘 표시 */
+.card-face--back::after {
+  content: '🐾';
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+}
+
+[data-theme='space'] .card-face--back::after {
+  content: '✨';
+}
+
+[data-theme='ocean'] .card-face--back::after {
+  content: '🌊';
+}
+
+.card-face--front {
+  background: var(--color-card-front);
+  color: var(--color-card-front-text);
+  transform: rotateY(180deg);
+  border: 2px solid var(--color-accent);
+}
+
+.card.is-matched .card-face--front {
+  background: var(--color-card-matched);
+  color: #08301f;
+  border-color: var(--color-card-matched);
+}
+
+.card.is-matched .card-inner {
+  opacity: 0.9;
+}
+
+/* 반응형 레이아웃 */
+@media (max-width: 640px) {
+  .card-grid {
+    gap: 0.5rem;
+  }
+
+  .difficulty-btn,
+  .mode-btn {
+    padding: 0.55rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .theme-btn {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.85rem;
+  }
+
+  .theme-btn__icon {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .card-face {
+    font-size: clamp(1.1rem, 6vw, 1.6rem);
+  }
+}

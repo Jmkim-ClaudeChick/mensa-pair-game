@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MENSA Pair Game</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-theme="animal">
+  <div class="app">
+    <header class="app-header">
+      <h1 class="app-title">MENSA Pair Game</h1>
+      <p class="app-subtitle">카드를 뒤집어 같은 그림의 짝을 찾아보세요!</p>
+    </header>
+
+    <section class="theme-section" aria-label="테마 선택">
+      <div id="theme-selector" class="theme-selector"></div>
+    </section>
+
+    <section class="mode-section" aria-label="플레이 모드 선택">
+      <div id="mode-selector" class="mode-selector"></div>
+    </section>
+
+    <section class="difficulty-section" aria-label="난이도 선택">
+      <div id="difficulty-selector" class="difficulty-selector"></div>
+    </section>
+
+    <div
+      id="player-turn-panel"
+      class="player-turn-panel"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
+
+    <section class="result-section" aria-label="결과 및 최고 기록">
+      <div
+        id="completion-banner"
+        class="completion-banner"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
+      <div id="high-score-panel" class="high-score-panel" aria-live="polite"></div>
+    </section>
+
+    <main class="board-section">
+      <div
+        id="card-board"
+        class="card-grid"
+        role="group"
+        aria-label="카드 보드"
+      ></div>
+    </main>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
