@@ -54,6 +54,8 @@ body {
   color: var(--color-text);
   font-family: 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   transition: background-color 200ms ease;
+  /* 더블탭 시 브라우저 확대 제스처로 오인식되지 않도록 (핀치 줌은 그대로 유지되어 접근성 영향 없음) */
+  touch-action: manipulation;
 }
 
 .app {
@@ -107,6 +109,20 @@ body {
   color: var(--color-text);
   cursor: pointer;
   transition: border-color 150ms ease, background 150ms ease, transform 150ms ease, color 150ms ease;
+}
+
+/* 모바일 터치 대응: 빠른 연속 탭이 더블탭 확대/텍스트 선택으로 오인식되지 않도록 차단
+   (연속 탭 시 브라우저가 확대 제스처로 판단 → 카드가 확대되며 뒤집기 애니메이션과 겹쳐
+   화면이 일그러져 보이고, 확대 후 좌표가 밀려 이후 탭이 카드를 빗나가는 문제 방지) */
+.card,
+.difficulty-btn,
+.theme-btn,
+.mode-btn {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .difficulty-btn {
